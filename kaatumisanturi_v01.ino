@@ -7,7 +7,7 @@ const int led = 4;
 float xData, yData, zData; //kalibroidut x,y,z arvot
 float axisData; //x,y,z arvojen vektorin itseisarvo
 
-float xOri, yOri; //x ja y akselien kierto, emme tarvi z akselin kiertoa.
+float xOri, yOri, zOri; //x-, y- ja z-akselin kierto
 
 unsigned long time = 0; //ajastin
 int state = 0; //eri tasot varmistaakseen kaatumisen
@@ -40,10 +40,12 @@ void loop() {
   //x,y,z akselin kulmat radiaaneina
   xOri = atan(xData/sqrt(pow(yData,2))+(pow(zData,2)));
   yOri = atan(yData/sqrt(pow(xData,2))+(pow(zData,2)));
+  zOri = atan(zData/sqrt(pow(xData,2))+(pow(yData,2)));
 
   //x,y,z aksen kulmat asteiksi
   xOri = xOri * (180/PI);
-  yOri = yOri * (180/PI) - 90; //-90 koska y-akseli on 90 astetta, kun anturi on kiinni kehossax
+  yOri = yOri * (180/PI) - 90;
+  zOri = zOri * (180/PI);
 
   //itseisarvo x+y+z
   axisData = sqrt((xData*xData)+(yData*yData)+(zData*zData));
@@ -58,6 +60,8 @@ void loop() {
   Serial.print(xOri);
   Serial.print("\t");
   Serial.print(yOri);
+  Serial.print("\t");
+  Serial.print(zOri);
   Serial.print("\t");
   Serial.print(axisData);
   Serial.print("\n");
@@ -75,7 +79,7 @@ void fall_detection()
 
   if(state == 1){
     if(axisData>2.5){
-      if(abs(xOri>60) || abs(yOri>60)){
+      if(abs(xOri>60) || abs(zOri>60)){
         state = 2;
         digitalWrite(led,LOW);
       }
