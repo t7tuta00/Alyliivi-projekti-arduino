@@ -13,6 +13,7 @@ float xOri, yOri, zOri; //x- ja y-akselin kierto
 
 unsigned long time = 0; //ajastin
 int state = 0; //eri tasot varmistaakseen kaatumisen
+String stateValue = "";
 
 void setup() {
   // put your setup code here, to run once:
@@ -43,12 +44,12 @@ void loop() {
   zData = (((float)z-340)/68);
   
   //x ja y akselin kulmat radiaaneina
-  xOri = atan(xData/sqrt(pow(yData,2))+(pow(zData,2)));
+  //xOri = atan(xData/sqrt(pow(yData,2))+(pow(zData,2)));
   yOri = atan(yData/sqrt(pow(xData,2))+(pow(zData,2)));
   zOri = atan(zData/sqrt(pow(xData,2))+(pow(yData,2)));
 
   //x ja y akselin kulmat asteiksi
-  xOri = xOri * (180/PI);
+  //xOri = xOri * (180/PI)-90;
   yOri = yOri * (180/PI);
   zOri = zOri * (180/PI);
 
@@ -57,28 +58,30 @@ void loop() {
   
   fallDetection();
   
-  Serial.print("Lämpötila: ");
-  Serial.println(Ntc_Data);
+  //Serial.print("Lämpötila: ");
+  //Serial.println(Ntc_Data);
   //Serial.print(xData);
   //Serial.print("\t");
   //Serial.print(yData);
   //Serial.print("\t");
   //Serial.print(zData);
   //Serial.print("\t");
-  //Serial.print(abs(xOri));
-  //Serial.print("\t");
-  //Serial.print(abs(yOri));
-  //Serial.print("\t");
-  //Serial.print(abs(zOri));
-  //Serial.print("\t");
+  Serial.println(stateValue);
+  Serial.print(xOri);
+  Serial.print("\t");
+  Serial.print(yOri);
+  Serial.print("\t");
+  Serial.print(zOri);
+  Serial.print("\t");
   Serial.print(axisData);
   Serial.print("\n");
   
-  delay(50);
+  delay(20);
 }
 
 void fallDetection()
 {
+  stateValue = "State0";
   if(axisData<0.5 && state == 0){
     state = 1;
     digitalWrite(led,LOW);
@@ -87,7 +90,7 @@ void fallDetection()
 
   if(state == 1){
     if(axisData>2.5){
-      if(abs(yOri>60) || abs(zOri>60)){
+      if(yOri > 60 || zOri > 60 || yOri < -60 || zOri < -60){
         state = 2;
         digitalWrite(led,LOW);
       }
