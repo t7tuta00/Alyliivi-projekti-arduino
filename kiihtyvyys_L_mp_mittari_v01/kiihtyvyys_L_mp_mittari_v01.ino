@@ -1,3 +1,5 @@
+#include <ArduinoJson.h>
+
 const int Ntc_Pin = A0;
 const int zpin = A1;
 const int xpin = A2;
@@ -10,6 +12,8 @@ float xData, yData, zData; //kalibroidut x,y,z arvot
 float axisData; //x,y,z arvojen vektorin itseisarvo
 
 float xOri, yOri, zOri; //x- ja y-akselin kierto
+
+String stateInfo = "";
 
 unsigned long time = 0; //ajastin
 int state = 0; //eri tasot varmistaakseen kaatumisen
@@ -44,17 +48,24 @@ void loop() {
   zData = (((float)z-340)/68);
   
   //x ja y akselin kulmat radiaaneina
-  //xOri = atan(xData/sqrt(pow(yData,2))+(pow(zData,2)));
+  xOri = atan(xData/sqrt(pow(yData,2))+(pow(zData,2)));
   yOri = atan(yData/sqrt(pow(xData,2))+(pow(zData,2)));
   zOri = atan(zData/sqrt(pow(xData,2))+(pow(yData,2)));
 
   //x ja y akselin kulmat asteiksi
-  //xOri = xOri * (180/PI)-90;
+  xOri = xOri * (180/PI)-90;
   yOri = yOri * (180/PI);
   zOri = zOri * (180/PI);
 
   //itseisarvo x+y+z
   axisData = sqrt((xData*xData)+(yData*yData)+(zData*zData));
+
+  DynamicJsonBuffer jBuffer;
+  JsonObject& root = jBuffer.createObject();
+  root ["stateInfo"]  = stateInfo;
+  root ["Ntc_Data"] = Ntc_Data;
+  root.prettyPrintTo(Serial);
+  Serial.println();
   
   fallDetection();
   
@@ -66,31 +77,34 @@ void loop() {
   //Serial.print("\t");
   //Serial.print(zData);
   //Serial.print("\t");
-  Serial.println(stateValue);
-  Serial.print(xOri);
-  Serial.print("\t");
-  Serial.print(yOri);
-  Serial.print("\t");
-  Serial.print(zOri);
-  Serial.print("\t");
-  Serial.print(axisData);
-  Serial.print("\n");
+  //Serial.println(stateValue);
+  //Serial.print(xOri);
+  //Serial.print("\t");
+  //Serial.print(yOri);
+  //Serial.print("\t");
+  //Serial.print(zOri);
+  //Serial.print("\t");
+  //Serial.print(axisData);
+  //Serial.print("\n");
+  //Serial.println(stateInfo);
   
   delay(20);
 }
 
 void fallDetection()
 {
-  stateValue = "State0";
-  if(axisData<0.5 && state == 0){
+  stateInfo="State 0, not falling detected";
+  if((axisData<0.5 && state == 0 && abs(yOri) < 60 && abs (zOri) < 60)){
     state = 1;
     digitalWrite(led,LOW);
     time = millis();
   }
-
+  
   if(state == 1){
+    stateInfo="State 1, not falling detected";
     if(axisData>2.5){
-      if(yOri > 60 || zOri > 60 || yOri < -60 || zOri < -60){
+      if(abs(yOri) > 60 || abs (zOri) > 60){
+        stateInfo = "State 2, falling might be happened";
         state = 2;
         digitalWrite(led,LOW);
       }
@@ -103,6 +117,10 @@ void fallDetection()
     }
   }
   if(state == 2){
+    stateInfo = "State 3, falling had happend, help patient";
     digitalWrite(led,HIGH);
+    if((millis()-time) > 5000){
+      state = 0;
+    }
   }
 }
